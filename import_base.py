@@ -14,6 +14,8 @@ Usage:
     python {0} <input-file>
 """.format(sys.argv[0])
 
+    mysql_time_format = '%Y-%m-%d %H:%M:%S'
+
     def main(self, argv):
         if len(argv) != 2:
             print(self.instructions)
@@ -66,7 +68,7 @@ Usage:
             line_num = -1
             lines_inserted = 0
             counter = 0
-            row = {"SourceIP":"", "SourcePort":"", "DestinationIP":"", "DestinationPort":"", "Timestamp": ""}
+            row = {"SourceIP": "", "SourcePort": "", "DestinationIP": "", "DestinationPort": "", "Timestamp": ""}
             rows = [row.copy() for i in range(1000)]
             for line in fin:
                 line_num += 1
@@ -105,10 +107,10 @@ Usage:
             common.db.multiple_insert('Syslog', values=truncated_rows)
         except Exception as e:
             # see http://dev.mysql.com/doc/refman/5.7/en/error-messages-server.html for codes
-            if e[0] == 1049: # Unknown database 'samapper'
+            if e[0] == 1049:  # Unknown database 'samapper'
                 dbaccess.create_database()
                 self.insert_data(rows, count)
-            elif e[0] == 1045: # Access Denied for '%s'@'%s' (using password: (YES|NO))
+            elif e[0] == 1045:  # Access Denied for '%s'@'%s' (using password: (YES|NO))
                 print(e[1])
                 print("Check your username / password? (dbconfig_local.py)")
                 sys.exit(1)
