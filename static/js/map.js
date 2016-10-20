@@ -5,7 +5,7 @@ var rect; //render region on screen
 //global transform coordinates, with initial values
 var tx = 0;
 var ty = 0;
-var scale = 0.0007;
+var g_scale = 0.0007;
 
 //mouse interaction variables
 var ismdown = false;
@@ -23,7 +23,7 @@ var config = {
     "show_clients": true,
     "show_servers": true,
     "show_in": true,
-    "show_out": false,
+    "show_out": true,
     "filter": "",
     "tstart": 1,
     "tend": 2147483647
@@ -36,7 +36,8 @@ var zNodes24 = 0.0555;
 var zLinks24 = 0.267;
 var zNodes32 = 1.333;
 var zLinks32 = 6.667;
-var chunkSize = 40;
+//max number of link requests to make at once, in link_request_submit()
+var g_chunkSize = 40;
 
 //for filtering and searching
 var g_timer = null;
@@ -44,24 +45,16 @@ var g_timer = null;
 function init() {
     "use strict";
     canvas = document.getElementById("canvas");
-    var navBarHeight = $("#navbar").height();
-    $("#output").css("top", navBarHeight);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - navBarHeight;
+    ctx = canvas.getContext("2d");
+    init_canvas(canvas, ctx);
+
     rect = canvas.getBoundingClientRect();
     tx = rect.width / 2;
     ty = rect.height / 2;
-    ctx = canvas.getContext("2d");
-    ctx.lineJoin = "bevel";
-    sel_init();
 
-    //Event listeners for detecting clicks and zooms
-    canvas.addEventListener("mousedown", mousedown);
-    canvas.addEventListener("mousemove", mousemove);
-    canvas.addEventListener("mouseup", mouseup);
-    canvas.addEventListener("mouseout", mouseup);
-    canvas.addEventListener("wheel", wheel);
     window.addEventListener("keydown", keydown, false);
+
+    sel_init();
 
     var filterElement = document.getElementById("filter");
     filterElement.oninput = onfilter;
@@ -89,7 +82,22 @@ function init() {
     GET_nodes(null);
 }
 
-function currentSubnet() {
+function init_canvas(c, cx) {
+    var navBarHeight = $("#navbar").height();
+    $("#output").css("top", navBarHeight);
+    c.width = window.innerWidth;
+    c.height = window.innerHeight - navBarHeight;
+    cx.lineJoin = "bevel";
+
+    //Event listeners for detecting clicks and zooms
+    c.addEventListener("mousedown", mousedown);
+    c.addEventListener("mousemove", mousemove);
+    c.addEventListener("mouseup", mouseup);
+    c.addEventListener("mouseout", mouseup);
+    c.addEventListener("wheel", wheel);
+}
+
+function currentSubnet(scale) {
     "use strict";
     if (scale < zNodes16) {
         return 8;
